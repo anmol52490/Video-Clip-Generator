@@ -44,8 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.style.display = 'block';
 
         try {
-            // This will be replaced by your Render backend URL during deployment
-            const API_URL = 'YOUR_RENDER_BACKEND_URL/generate-video'; 
+            // This will be replaced by your Railway backend URL during deployment
+            const API_URL = 'YOUR_RAILWAY_BACKEND_URL/generate-video'; 
             
             const response = await fetch(API_URL, {
                 method: 'POST',

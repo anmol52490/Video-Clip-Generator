@@ -1,5 +1,5 @@
 # backend/app.py
-# This is the FastAPI backend, optimized for Render deployment.
+# This is the FastAPI backend, optimized for Railway deployment.
 
 import os
 import uuid
@@ -15,9 +15,9 @@ import numpy as np
 from PIL import Image
 import imageio
 
-# --- Configuration for Render's Persistent Disk ---
-# Render mounts a persistent disk at /var/data. We'll use this to cache the model.
-CACHE_DIR = "/var/data/huggingface_cache"
+# --- Configuration for Railway's Persistent Volume ---
+# Railway mounts a persistent volume at /data. We'll use this to cache the model.
+CACHE_DIR = "/data/huggingface_cache"
 # The /tmp directory is for temporary files that can be deleted.
 GENERATED_DIR = "/tmp/generated_videos_temp"
 os.makedirs(CACHE_DIR, exist_ok=True)
@@ -32,9 +32,8 @@ ml_models = {}
 async def lifespan(app: FastAPI):
     """
     Handles startup and shutdown events. Loads the AI model on startup.
-    It will load the model from the persistent disk if it exists, otherwise it downloads it.
+    It will load the model from the persistent volume if it exists, otherwise it downloads it.
     """
-    # --- FIX: Using the original, larger model ---
     model_id = "stabilityai/sd-turbo"
     print(f"Loading AI model ({model_id})...")
     print(f"Model cache directory: {CACHE_DIR}")
@@ -43,7 +42,7 @@ async def lifespan(app: FastAPI):
         pipe = AutoPipelineForText2Image.from_pretrained(
             model_id,
             torch_dtype=torch.float32,
-            # This tells diffusers to use our persistent disk for caching
+            # This tells diffusers to use our persistent volume for caching
             cache_dir=CACHE_DIR
         )
         pipe.to("cpu")
