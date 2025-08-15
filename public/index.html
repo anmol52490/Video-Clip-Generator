@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Forge</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="theme-switcher">
+        <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox">
+        <label for="theme-toggle" class="theme-toggle-label"></label>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">🎬</div>
+            <h1>AI Video Forge</h1>
+            <p class="subtitle">Transform your ideas into short videos, powered by AI.</p>
+        </header>
+
+        <main>
+            <div class="input-container">
+                <textarea id="prompt" placeholder="e.g., A majestic lion in the savanna at sunset..."></textarea>
+            </div>
+            <button id="generateBtn">
+                <span class="btn-text">Generate Video</span>
+                <span class="spinner" style="display: none;"></span>
+            </button>
+        </main>
+
+        <div id="result-container" class="result-container">
+            <!-- Video or error messages will be displayed here -->
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
