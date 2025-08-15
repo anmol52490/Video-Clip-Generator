@@ -1,0 +1,14 @@
+# .nixpacks/nixpacks.toml
+# This file provides configuration for Nixpacks, Railway's build system.
+
+[phases.setup]
+# This ensures that essential system libraries for handling images and video are installed.
+nixPkgs = ["...", "ffmpeg", "opencv"]
+
+[phases.install]
+# Specifies the command to install our Python dependencies.
+cmds = ["pip install -r backend/requirements.txt"]
+
+[start]
+# Specifies the command to start our application.
+cmd = "cd backend && ./start.sh"
