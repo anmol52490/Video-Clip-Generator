@@ -1,6 +1,7 @@
 # api/app.py
 # This is the FastAPI backend, optimized for serverless deployment.
 
+from http.client import HTTPException
 import os
 import uuid
 import base64
