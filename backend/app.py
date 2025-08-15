@@ -1,11 +1,10 @@
-# api/app.py
-# This is the FastAPI backend, optimized for serverless deployment.
+# backend/app.py
+# This is the FastAPI backend, optimized for Render deployment.
 
-from http.client import HTTPException
 import os
 import uuid
 import base64
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
@@ -16,10 +15,14 @@ import numpy as np
 from PIL import Image
 import imageio
 
-# --- Configuration ---
-# In a serverless environment, we write to the /tmp directory
+# --- Configuration for Render's Persistent Disk ---
+# Render mounts a persistent disk at /var/data. We'll use this to cache the model.
+CACHE_DIR = "/var/data/huggingface_cache"
+# The /tmp directory is for temporary files that can be deleted.
 GENERATED_DIR = "/tmp/generated_videos_temp"
+os.makedirs(CACHE_DIR, exist_ok=True)
 os.makedirs(GENERATED_DIR, exist_ok=True)
+
 
 # --- AI Model & Global State ---
 ml_models = {}
@@ -29,13 +32,19 @@ ml_models = {}
 async def lifespan(app: FastAPI):
     """
     Handles startup and shutdown events. Loads the AI model on startup.
-    This is crucial for serverless functions to keep the model warm.
+    It will load the model from the persistent disk if it exists, otherwise it downloads it.
     """
-    print("Loading AI model (stabilityai/sd-turbo)...")
+    # --- FIX: Using the original, larger model ---
+    model_id = "stabilityai/sd-turbo"
+    print(f"Loading AI model ({model_id})...")
+    print(f"Model cache directory: {CACHE_DIR}")
+    
     try:
         pipe = AutoPipelineForText2Image.from_pretrained(
-            "stabilityai/sd-turbo",
-            torch_dtype=torch.float32
+            model_id,
+            torch_dtype=torch.float32,
+            # This tells diffusers to use our persistent disk for caching
+            cache_dir=CACHE_DIR
         )
         pipe.to("cpu")
         ml_models["text_to_image"] = pipe
@@ -56,13 +65,12 @@ app = FastAPI(
 )
 
 # --- CORS Middleware ---
-# This allows our frontend (on a different domain) to communicate with this backend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # --- Pydantic Models ---
@@ -71,9 +79,6 @@ class VideoRequest(BaseModel):
 
 # --- Video Generation Logic ---
 def create_animated_video(base_image: Image.Image, output_path: str, duration_secs=5, fps=24):
-    """
-    Creates a zoom-in video from a single image using imageio.
-    """
     img_np = np.array(base_image)
     height, width, _ = img_np.shape
     num_frames = duration_secs * fps
@@ -82,7 +87,7 @@ def create_animated_video(base_image: Image.Image, output_path: str, duration_se
     
     with imageio.get_writer(output_path, mode='I', fps=fps, format='FFMPEG', codec='libx264') as writer:
         for i in range(num_frames):
-            scale = 1.0 + (0.2 * i / num_frames) # Zooms from 1.0x to 1.2x
+            scale = 1.0 + (0.2 * i / num_frames)
             M = cv2.getRotationMatrix2D((width / 2, height / 2), 0, scale)
             zoomed_frame_np = cv2.warpAffine(img_np, M, (width, height))
             writer.append_data(zoomed_frame_np)
@@ -90,15 +95,12 @@ def create_animated_video(base_image: Image.Image, output_path: str, duration_se
     print(f"✅ Video saved temporarily to {output_path}")
 
 # --- API Endpoints ---
-@app.get("/api")
+@app.get("/")
 def read_root():
     return {"message": "AI Video Generator API is running."}
 
-@app.post("/api/generate-video")
+@app.post("/generate-video")
 async def generate_video_endpoint(request: VideoRequest):
-    """
-    API endpoint to generate an image and animate it into a video.
-    """
     prompt = request.prompt.strip()
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt cannot be empty")

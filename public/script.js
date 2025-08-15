@@ -1,4 +1,4 @@
-// public/script.js
+// frontend/script.js
 document.addEventListener('DOMContentLoaded', () => {
     const generateBtn = document.getElementById('generateBtn');
     const promptTextarea = document.getElementById('prompt');
@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
             themeToggle.checked = true;
         }
     } else {
-        // Default to light theme
         document.documentElement.setAttribute('data-theme', 'light');
     }
 
@@ -40,14 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Update UI to loading state
         generateBtn.disabled = true;
         btnText.textContent = 'Generating...';
         spinner.style.display = 'block';
 
         try {
-            // IMPORTANT: Replace with your deployed backend URL
-            const API_URL = '/api/generate-video'; // This works for Vercel deployment
+            // This will be replaced by your Render backend URL during deployment
+            const API_URL = 'YOUR_RENDER_BACKEND_URL/generate-video'; 
             
             const response = await fetch(API_URL, {
                 method: 'POST',
@@ -73,7 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             resultContainer.innerHTML = `<div class="error-message"><strong>Error:</strong> ${error.message}</div>`;
         } finally {
-            // Revert UI from loading state
             generateBtn.disabled = false;
             btnText.textContent = 'Generate Video';
             spinner.style.display = 'none';
